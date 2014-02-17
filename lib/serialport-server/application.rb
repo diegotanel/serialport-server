@@ -57,6 +57,7 @@ module SerialportServer
                                      @args[:bit].to_i,
                                      @args[:stopbit].to_i,
                                      @args[:parity].to_i)
+        @serialport.read_timeout = 100
       rescue => e
         STDERR.puts 'cannot open serialport!!'
         STDERR.puts e.to_s

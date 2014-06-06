@@ -60,6 +60,8 @@ module SerialportServer
         @serialport.read_timeout = 100
         @serialport.flush
         @serialport.sync = true
+        @serialport.flow_control = 0
+        @serialport.write "SIR\r\n"
       rescue => e
         STDERR.puts 'cannot open serialport!!'
         STDERR.puts e.to_s
@@ -93,9 +95,9 @@ module SerialportServer
             puts "* new websocket client <#{sid}> connected"
             ws.onmessage do |mes|
               puts "* websocket client <#{sid}> : #{mes}"
-              @serialport.puts mes.strip
+              @serialport.puts mes.to_s + "\r\n"
+              puts mes.to_s
             end
-
             ws.onclose do
               @channel.unsubscribe sid
               puts "* websocket client <#{sid}> closed"
@@ -106,7 +108,7 @@ module SerialportServer
 
         EM::defer do
           loop do
-            data = @serialport.gets.gsub(/[\r\n]/,'') rescue next
+            data = @serialport.gets rescue next
             data = data.to_i if data =~ /^\d+$/
             next if !data or data.to_s.empty?
             @channel.push data
@@ -116,7 +118,7 @@ module SerialportServer
 
         EM::defer do
           loop do
-            line = STDIN.gets.gsub(/[\r\n]/,'')
+            line = STDIN.gets
             next if !line or line.to_s.empty?
             @serialport.puts line rescue next
           end
